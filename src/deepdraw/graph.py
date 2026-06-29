@@ -15,8 +15,6 @@ from deepdraw.agents import (
 )
 from deepdraw.state import AgentState
 
-MAX_REFLECTION_ITERATIONS = 3  # Phase 6 才会真正驱动自博弈；Phase 1 占位
-
 builder = StateGraph(AgentState)
 
 # Nodes (with retry policy for transient LLM failures in later phases)

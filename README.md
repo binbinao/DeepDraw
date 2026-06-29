@@ -17,7 +17,7 @@ pytest
 
 # 4. CLI 试跑（输出空 JSON 骨架）
 echo "dummy content" > /tmp/test.pdf
-python -m deepdraw.cli run /tmp/test.pdf
+python -m deepdraw.cli /tmp/test.pdf
 
 # 5. LangGraph Studio（可视化图结构）
 langgraph dev

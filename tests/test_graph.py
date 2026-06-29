@@ -33,3 +33,19 @@ async def test_graph_runs_end_to_end_with_placeholder_state(compiled_graph, dumm
     assert final["status"] == "needs_human"
     assert final["reflection_iterations"] == 1
     assert "verification_notes" in final
+
+
+@pytest.mark.asyncio
+async def test_thread_id_isolates_state(compiled_graph, dummy_drawing) -> None:
+    """Different thread_ids should produce independent reflection_iterations counters."""
+    s1 = await compiled_graph.ainvoke(
+        {"drawing_path": str(dummy_drawing)},
+        config={"configurable": {"thread_id": "thread-A"}},
+    )
+    s2 = await compiled_graph.ainvoke(
+        {"drawing_path": str(dummy_drawing)},
+        config={"configurable": {"thread_id": "thread-B"}},
+    )
+    # Both fresh threads should start from 0 and increment to 1 (no shared state)
+    assert s1["reflection_iterations"] == 1
+    assert s2["reflection_iterations"] == 1

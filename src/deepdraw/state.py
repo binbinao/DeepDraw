@@ -59,7 +59,7 @@ class AgentState(TypedDict, total=False):
     spec: DrawingSpec
     errors: Annotated[list[DrawingError], operator.add]
     bom: Annotated[list[BOMItem], operator.add]
-    process_plan: list[ProcessStep]
+    process_plan: Annotated[list[ProcessStep], operator.add]
     # Reflection state (used by Chief Verifier ↔ Process Recommender loop)
     verification_notes: Annotated[list[str], operator.add]
     reflection_iterations: int
