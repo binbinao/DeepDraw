@@ -1,0 +1,6 @@
+{
+  "graphs": {
+    "deepdraw": "./src/deepdraw/graph.py:graph"
+  },
+  "env": "./.env"
+}
