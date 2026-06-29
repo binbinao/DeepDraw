@@ -38,8 +38,16 @@ def run(
     # LangGraph 1.x: async node functions require ainvoke (sync invoke rejected)
     final_state = asyncio.run(graph.ainvoke(initial_state, config=config))
 
+    intermediate = final_state.get("intermediate") or {}
     report = {
         "spec": final_state.get("spec", {}),
+        "intermediate": {
+            "file_type": intermediate.get("file_type"),
+            "text_block_count": len(intermediate.get("text_blocks", [])),
+            "image_count": len(intermediate.get("images_b64", [])),
+            "entity_count": len(intermediate.get("entities", [])),
+            "parsed_path": intermediate.get("parsed_path"),
+        },
         "errors": final_state.get("errors", []),
         "bom": final_state.get("bom", []),
         "process_plan": final_state.get("process_plan", []),

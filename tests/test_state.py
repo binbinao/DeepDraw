@@ -25,3 +25,8 @@ def test_agent_state_empty_construction() -> None:
     state: AgentState = {}
     assert state.get("drawing_path") is None
     assert state.get("errors") is None
+
+
+def test_agent_state_has_intermediate_field() -> None:
+    """Phase 2 added `intermediate` for parsed drawing data."""
+    assert "intermediate" in AgentState.__annotations__

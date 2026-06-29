@@ -14,16 +14,55 @@ from deepdraw.agents import (
 
 
 @pytest.mark.asyncio
-async def test_spec_interpreter_node_returns_spec() -> None:
-    result = await spec_interpreter.spec_interpreter_node({"drawing_path": "/tmp/x.pdf"})
+async def test_spec_interpreter_node_with_pdf(sample_pdf) -> None:
+    result = await spec_interpreter.spec_interpreter_node({"drawing_path": str(sample_pdf)})
+    assert "intermediate" in result
+    assert result["intermediate"]["file_type"] == "pdf"
+    assert result["intermediate"]["text_blocks"][0]  # non-empty text from fixture
+    assert "DeepDraw Test Drawing" in result["intermediate"]["text_blocks"][0]
+    assert len(result["intermediate"]["images_b64"]) == 1
     assert "spec" in result
-    assert result["spec"]["raw_requirements"]["drawing_path"] == "/tmp/x.pdf"
+    assert result["spec"]["raw_requirements"]["file_type"] == "pdf"
 
 
 @pytest.mark.asyncio
-async def test_drawing_auditor_node_returns_empty_errors() -> None:
-    result = await drawing_auditor.drawing_auditor_node({})
-    assert result == {"errors": []}
+async def test_spec_interpreter_node_with_dxf(sample_dxf) -> None:
+    result = await spec_interpreter.spec_interpreter_node({"drawing_path": str(sample_dxf)})
+    assert result["intermediate"]["file_type"] == "dxf"
+    assert len(result["intermediate"]["entities"]) >= 3  # LINE + CIRCLE + TEXT
+    assert "images_b64" not in result["intermediate"]  # DXF doesn't render images
+
+
+@pytest.mark.asyncio
+async def test_spec_interpreter_node_handles_missing_file() -> None:
+    result = await spec_interpreter.spec_interpreter_node({"drawing_path": "/tmp/nope.pdf"})
+    assert "error" in result["spec"]["raw_requirements"]
+
+
+@pytest.mark.asyncio
+async def test_drawing_auditor_node_consumes_pdf_images() -> None:
+    state = {
+        "intermediate": {
+            "file_type": "pdf",
+            "images_b64": ["fake_png_1", "fake_png_2"],
+        },
+    }
+    result = await drawing_auditor.drawing_auditor_node(state)
+    assert "verification_notes" in result
+    assert "2 page image(s) from pdf" in result["verification_notes"][0]
+
+
+@pytest.mark.asyncio
+async def test_drawing_auditor_node_consumes_dxf_entities() -> None:
+    state = {
+        "intermediate": {
+            "file_type": "dxf",
+            "entities": [{"type": "LINE"}, {"type": "CIRCLE"}, {"type": "TEXT"}],
+        },
+    }
+    result = await drawing_auditor.drawing_auditor_node(state)
+    assert len(result["verification_notes"]) == 2
+    assert "3 geometry entities" in result["verification_notes"][1]
 
 
 @pytest.mark.asyncio

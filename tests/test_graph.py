@@ -24,26 +24,29 @@ def test_graph_has_all_5_agent_nodes(compiled_graph) -> None:
 
 
 @pytest.mark.asyncio
-async def test_graph_runs_end_to_end_with_placeholder_state(compiled_graph, dummy_drawing) -> None:
-    """Invoke the graph async with a placeholder PDF and assert a non-empty final state."""
+async def test_graph_runs_end_to_end_with_real_pdf(compiled_graph, sample_pdf) -> None:
+    """Invoke the graph async with a real PDF and assert a non-empty final state."""
     final = await compiled_graph.ainvoke(
-        {"drawing_path": str(dummy_drawing)},
+        {"drawing_path": str(sample_pdf)},
         config={"configurable": {"thread_id": "test-1"}},
     )
     assert final["status"] == "needs_human"
     assert final["reflection_iterations"] == 1
     assert "verification_notes" in final
+    # Phase 2: Spec Interpreter populated intermediate
+    assert final["intermediate"]["file_type"] == "pdf"
+    assert final["intermediate"]["text_blocks"][0]
 
 
 @pytest.mark.asyncio
-async def test_thread_id_isolates_state(compiled_graph, dummy_drawing) -> None:
+async def test_thread_id_isolates_state(compiled_graph, sample_pdf) -> None:
     """Different thread_ids should produce independent reflection_iterations counters."""
     s1 = await compiled_graph.ainvoke(
-        {"drawing_path": str(dummy_drawing)},
+        {"drawing_path": str(sample_pdf)},
         config={"configurable": {"thread_id": "thread-A"}},
     )
     s2 = await compiled_graph.ainvoke(
-        {"drawing_path": str(dummy_drawing)},
+        {"drawing_path": str(sample_pdf)},
         config={"configurable": {"thread_id": "thread-B"}},
     )
     # Both fresh threads should start from 0 and increment to 1 (no shared state)

@@ -50,11 +50,26 @@ class ProcessStep(TypedDict):
     parameters: dict
 
 
+class DrawingIntermediate(TypedDict, total=False):
+    """Output of Phase 2 file parsers (PDF/DXF).
+
+    Populated by Spec Interpreter; consumed by Drawing Auditor.
+    """
+
+    file_type: str  # "pdf" | "dxf"
+    text_blocks: list[str]  # PDF: per-page text
+    images_b64: list[str]  # PDF: per-page PNG as base64 (Vision-LLM ready)
+    entities: list[dict]  # DXF: serialized entity list
+    parsed_path: str  # absolute path that was parsed
+
+
 class AgentState(TypedDict, total=False):
     """Top-level state for the 5-Agent LangGraph workflow."""
 
     # Inputs
     drawing_path: str
+    # Phase 2 — parsed file intermediate representation
+    intermediate: DrawingIntermediate
     # Accumulator outputs (use operator.add reducer for list fields)
     spec: DrawingSpec
     errors: Annotated[list[DrawingError], operator.add]
