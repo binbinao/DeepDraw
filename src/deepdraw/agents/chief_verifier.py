@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from deepdraw.llm import get_structured_llm
 from deepdraw.prompts import load_prompt

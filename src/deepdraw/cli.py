@@ -32,10 +32,7 @@ def run(
     """Run the 5-Agent DFM-Copilot workflow on a single drawing."""
     initial_state = {"drawing_path": str(drawing.absolute())}
     config = {"configurable": {"thread_id": thread_id}}
-
     console.print(f"[bold green]▶ DeepDraw:[/bold green] processing {drawing}")
-
-    # LangGraph 1.x: async node functions require ainvoke (sync invoke rejected)
     final_state = asyncio.run(graph.ainvoke(initial_state, config=config))
 
     intermediate = final_state.get("intermediate") or {}
@@ -54,6 +51,7 @@ def run(
         "verification_notes": final_state.get("verification_notes", []),
         "reflection_iterations": final_state.get("reflection_iterations", 0),
         "status": final_state.get("status", "unknown"),
+        "rag_context_chunks": len(final_state.get("rag_context", [])),
     }
 
     if output:
@@ -61,6 +59,54 @@ def run(
         console.print(f"[green]✓[/green] Report written to {output}")
     else:
         console.print(JSON(json.dumps(report, indent=2, ensure_ascii=False)))
+
+
+@app.command()
+def index() -> None:
+    """Ingest PoC mock manuals + historical drawings into ChromaDB."""
+    from deepdraw.tools.seed import seed_all
+
+    console.print("[bold blue]▶ Indexing PoC data...[/bold blue]")
+    result = seed_all()
+    console.print(f"[green]✓[/green] Seeded: {result}")
+
+
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Search query"),
+    n: int = typer.Option(3, help="Number of results"),
+) -> None:
+    """Search the enterprise_manuals ChromaDB collection."""
+    from deepdraw.tools.rag import (
+        COLLECTION_MANUALS,
+        format_results,
+        get_client,
+        get_or_create_collection,
+        query,
+    )
+
+    client = get_client(persist=True)
+    coll = get_or_create_collection(client, COLLECTION_MANUALS)
+    results = query(coll, query, n_results=n)
+    if not results:
+        console.print("[yellow]No results. Run `deepdraw index` first.[/yellow]")
+        return
+    console.print(f"[bold]Found {len(results)} chunks:[/bold]\n")
+    console.print(format_results(results))
+
+
+@app.command()
+def wipe() -> None:
+    """Wipe the ChromaDB persistence directory (irreversible)."""
+    import shutil
+
+    from deepdraw.tools.rag import PERSIST_DIR
+
+    if PERSIST_DIR.exists():
+        shutil.rmtree(PERSIST_DIR)
+        console.print(f"[green]✓[/green] Wiped {PERSIST_DIR}")
+    else:
+        console.print(f"[yellow]No DB at {PERSIST_DIR}[/yellow]")
 
 
 if __name__ == "__main__":

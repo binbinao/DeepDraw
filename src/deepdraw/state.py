@@ -70,6 +70,8 @@ class AgentState(TypedDict, total=False):
     drawing_path: str
     # Phase 2 — parsed file intermediate representation
     intermediate: DrawingIntermediate
+    # Phase 5 — RAG-retrieved context chunks (for LLM context)
+    rag_context: list[str]
     # Accumulator outputs (use operator.add reducer for list fields)
     spec: DrawingSpec
     errors: Annotated[list[DrawingError], operator.add]
