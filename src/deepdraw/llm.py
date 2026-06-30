@@ -1,12 +1,13 @@
 """LLM factory for DeepDraw agents.
 
 Phase 1 defines the factory but does NOT use it (agents are echo).
-Phase 3 will import `get_llm("spec_interpreter")` inside each node.
+Phase 3 uses it for Spec Interpreter / Drawing Auditor / BOM Generator.
 """
 
 from __future__ import annotations
 
 from langchain.chat_models import init_chat_model
+from pydantic import BaseModel
 
 # Per-agent LLM config (Phase 1 placeholders; Phase 3 tunes these)
 _LLM_CONFIG: dict[str, dict] = {
@@ -26,3 +27,13 @@ def get_llm(agent_name: str):
     if agent_name not in _LLM_CONFIG:
         raise KeyError(f"Unknown agent: {agent_name}. Known: {list(_LLM_CONFIG)}")
     return init_chat_model(**_LLM_CONFIG[agent_name])
+
+
+def get_structured_llm(agent_name: str, schema: type[BaseModel]):
+    """Return a chat model with structured output bound to a Pydantic schema.
+
+    Uses the agent's configured model + temperature; wraps with with_structured_output().
+    Cannot be combined with bind_tools() on the same model.
+    """
+    llm = get_llm(agent_name)
+    return llm.with_structured_output(schema)
