@@ -6,8 +6,14 @@ Phase 3 uses it for Spec Interpreter / Drawing Auditor / BOM Generator.
 
 from __future__ import annotations
 
-from langchain.chat_models import init_chat_model
 from pydantic import BaseModel
+
+try:
+    # LangChain 1.x: init_chat_model moved to langchain_core
+    from langchain_core.chat_models import init_chat_model  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover
+    # Fallback for older langchain<1.0
+    from langchain.chat_models import init_chat_model  # type: ignore[no-redef]
 
 # Per-agent LLM config (Phase 1 placeholders; Phase 3 tunes these)
 _LLM_CONFIG: dict[str, dict] = {

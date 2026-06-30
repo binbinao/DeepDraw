@@ -1,8 +1,4 @@
-"""👓 Spec Interpreter — 需求翻译官
-
-Phase 2: parses PDF/DXF, populates intermediate.text_blocks / entities.
-Phase 3: will call a real LLM with prompts/spec_interpreter.md to extract spec.
-"""
+"""👓 Spec Interpreter — extracts structured spec from PDF/DXF via LLM (Phase 3)."""
 
 from __future__ import annotations
 
@@ -10,25 +6,33 @@ import asyncio
 import base64
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
+from deepdraw.llm import get_structured_llm
+from deepdraw.prompts import load_prompt
 from deepdraw.state import AgentState
 from deepdraw.tools.dxf import extract_dxf_entities
 from deepdraw.tools.file_detect import detect_file_type
 from deepdraw.tools.pdf import extract_pdf_images, extract_pdf_text
 
 
-async def spec_interpreter_node(state: AgentState) -> dict:
-    """Parse the drawing file and populate `intermediate` + basic `spec`.
+class SpecLLMResult(BaseModel):
+    """Structured output for Spec Interpreter LLM call."""
 
-    Phase 2 returns raw text/entity counts; Phase 3 will LLM-extract structured spec.
-    """
+    material: str | None = None
+    thickness_mm: float | None = None
+    batch_size: int | None = None
+    surface_treatment: str | None = None
+    raw_requirements: dict = Field(default_factory=dict)
+
+
+async def spec_interpreter_node(state: AgentState) -> dict:
+    """Parse drawing → intermediate → LLM-extract spec → return partial update."""
     drawing_path = state.get("drawing_path", "")
     if not drawing_path or not Path(drawing_path).exists():
         return {
             "spec": {
-                "raw_requirements": {
-                    "drawing_path": drawing_path,
-                    "error": "file not found",
-                },
+                "raw_requirements": {"drawing_path": drawing_path, "error": "file not found"},
             },
         }
 
@@ -46,16 +50,24 @@ async def spec_interpreter_node(state: AgentState) -> dict:
     elif file_type == "dxf":
         dxf_result = await asyncio.to_thread(extract_dxf_entities, drawing_path)
         intermediate["entities"] = dxf_result["entities"]
-    # else: unknown → leave intermediate empty
+
+    spec_result = SpecLLMResult()
+    if intermediate.get("text_blocks"):
+        pdf_text = "\n\n".join(intermediate["text_blocks"])[:4000]
+        try:
+            llm = get_structured_llm("spec_interpreter", SpecLLMResult)
+            prompt = load_prompt("spec_interpreter").format(pdf_text=pdf_text)
+            spec_result = await llm.ainvoke(prompt)
+        except Exception as e:
+            intermediate.setdefault("llm_errors", []).append(f"spec_interpreter: {e!s}")
 
     return {
         "intermediate": intermediate,
         "spec": {
-            "raw_requirements": {
-                "drawing_path": drawing_path,
-                "file_type": file_type,
-                "page_count": len(intermediate.get("text_blocks", [])),
-                "entity_count": len(intermediate.get("entities", [])),
-            },
+            "material": spec_result.material,
+            "thickness_mm": spec_result.thickness_mm,
+            "batch_size": spec_result.batch_size,
+            "surface_treatment": spec_result.surface_treatment,
+            "raw_requirements": spec_result.raw_requirements,
         },
     }

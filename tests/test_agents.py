@@ -18,19 +18,21 @@ async def test_spec_interpreter_node_with_pdf(sample_pdf) -> None:
     result = await spec_interpreter.spec_interpreter_node({"drawing_path": str(sample_pdf)})
     assert "intermediate" in result
     assert result["intermediate"]["file_type"] == "pdf"
-    assert result["intermediate"]["text_blocks"][0]  # non-empty text from fixture
+    assert result["intermediate"]["text_blocks"][0]
     assert "DeepDraw Test Drawing" in result["intermediate"]["text_blocks"][0]
     assert len(result["intermediate"]["images_b64"]) == 1
     assert "spec" in result
-    assert result["spec"]["raw_requirements"]["file_type"] == "pdf"
+    # Phase 3: LLM may fail without API key → graceful degradation
+    assert "material" in result["spec"]
+    assert "raw_requirements" in result["spec"]
 
 
 @pytest.mark.asyncio
 async def test_spec_interpreter_node_with_dxf(sample_dxf) -> None:
     result = await spec_interpreter.spec_interpreter_node({"drawing_path": str(sample_dxf)})
     assert result["intermediate"]["file_type"] == "dxf"
-    assert len(result["intermediate"]["entities"]) >= 3  # LINE + CIRCLE + TEXT
-    assert "images_b64" not in result["intermediate"]  # DXF doesn't render images
+    assert len(result["intermediate"]["entities"]) >= 3
+    assert "images_b64" not in result["intermediate"]
 
 
 @pytest.mark.asyncio
@@ -40,20 +42,8 @@ async def test_spec_interpreter_node_handles_missing_file() -> None:
 
 
 @pytest.mark.asyncio
-async def test_drawing_auditor_node_consumes_pdf_images() -> None:
-    state = {
-        "intermediate": {
-            "file_type": "pdf",
-            "images_b64": ["fake_png_1", "fake_png_2"],
-        },
-    }
-    result = await drawing_auditor.drawing_auditor_node(state)
-    assert "verification_notes" in result
-    assert "2 page image(s) from pdf" in result["verification_notes"][0]
-
-
-@pytest.mark.asyncio
-async def test_drawing_auditor_node_consumes_dxf_entities() -> None:
+async def test_drawing_auditor_node_no_images_dxf() -> None:
+    """Phase 3: no images → skip Vision call, record note."""
     state = {
         "intermediate": {
             "file_type": "dxf",
@@ -61,8 +51,18 @@ async def test_drawing_auditor_node_consumes_dxf_entities() -> None:
         },
     }
     result = await drawing_auditor.drawing_auditor_node(state)
-    assert len(result["verification_notes"]) == 2
-    assert "3 geometry entities" in result["verification_notes"][1]
+    assert result["errors"] == []
+    notes_text = " ".join(result["verification_notes"])
+    assert "3 geometry entities" in notes_text
+
+
+@pytest.mark.asyncio
+async def test_drawing_auditor_node_handles_llm_failure(sample_pdf) -> None:
+    """Phase 3: when LLM (langchain-openai) is not installed, graceful fallback."""
+    state = {"intermediate": {"file_type": "pdf", "images_b64": ["fake"]}}
+    result = await drawing_auditor.drawing_auditor_node(state)
+    assert "errors" in result
+    assert "verification_notes" in result
 
 
 @pytest.mark.asyncio
