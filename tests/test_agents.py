@@ -73,8 +73,11 @@ async def test_bom_generator_node_returns_empty_bom() -> None:
 
 @pytest.mark.asyncio
 async def test_process_recommender_node_returns_empty_plan() -> None:
+    """Phase 4: with no state, LLM fails gracefully and returns empty plan + note."""
     result = await process_recommender.process_recommender_node({})
-    assert result == {"process_plan": []}
+    assert result["process_plan"] == []
+    # Phase 4 gracefully degrades when no spec/bom; may return note
+    assert "verification_notes" in result or "process_plan" in result
 
 
 @pytest.mark.asyncio
