@@ -52,14 +52,22 @@ builder.add_edge("bom_generator", "process_recommender")
 builder.add_edge("process_recommender", "chief_verifier")
 
 
-# Conditional edge placeholder for Reflection Loop (real logic in Phase 6)
-def should_reflect(state: AgentState) -> str:
-    """Decide whether to loop back for another reflection round.
+MAX_REFLECTION_ITERATIONS = 3
 
-    Phase 1: always ends (max_iter enforced in Phase 6).
+
+# Reflection Loop router: chief_verifier → either loop back to process_recommender or end
+def should_reflect(state: AgentState) -> str:
+    """Decide whether to loop back for another reflection round (Phase 6).
+
+    Exits when:
+    - status="success" (Chief Verifier is satisfied)
+    - reflection_iterations >= MAX_REFLECTION_ITERATIONS (hard cap)
     """
-    del state  # unused
-    return END
+    if state.get("status") == "success":
+        return END
+    if state.get("reflection_iterations", 0) >= MAX_REFLECTION_ITERATIONS:
+        return END
+    return "process_recommender"
 
 
 builder.add_conditional_edges("chief_verifier", should_reflect)

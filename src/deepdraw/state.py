@@ -80,6 +80,8 @@ class AgentState(TypedDict, total=False):
     # Reflection state (used by Chief Verifier ↔ Process Recommender loop)
     verification_notes: Annotated[list[str], operator.add]
     reflection_iterations: int
+    # Phase 6 — Self-play reflection: each round's process_plan preserved
+    process_plan_history: Annotated[list[list[ProcessStep]], operator.add]
     # Terminal state
     final_report: dict
     status: str  # "success" | "needs_human" | "conflict"

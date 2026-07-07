@@ -103,6 +103,7 @@ async def process_recommender_node(state: AgentState) -> dict:
     except Exception as e:
         return {
             "process_plan": [],
+            "process_plan_history": [[]],
             "rag_context": rag_raw,
             "verification_notes": [f"[Phase5] Process Recommender failed: {e!s}"],
         }

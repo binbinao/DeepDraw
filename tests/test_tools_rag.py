@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from deepdraw.tools.rag import (
-    add_documents, format_results, get_client,
-    get_or_create_collection, query,
+    add_documents,
+    format_results,
+    get_client,
+    get_or_create_collection,
+    query,
 )
 
 

@@ -30,6 +30,7 @@ def get_or_create_collection(client, name: str, embedding_fn=None):
     if embedding_fn is None:
         try:
             from chromadb.utils import embedding_functions
+
             embedding_fn = embedding_functions.DefaultEmbeddingFunction()
         except Exception:
             pass  # tests may pass empty collection; query() will raise at runtime
