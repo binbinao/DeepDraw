@@ -61,6 +61,7 @@ async def test_thread_id_isolates_state(compiled_graph, sample_pdf) -> None:
 def test_should_reflect_returns_end_on_success() -> None:
     """status='success' → exit loop."""
     from langgraph.graph import END
+
     from deepdraw.graph import should_reflect
 
     state = {"status": "success", "reflection_iterations": 1}
@@ -78,6 +79,7 @@ def test_should_reflect_loops_back_on_conflict_under_cap() -> None:
 def test_should_reflect_returns_end_at_max_iter() -> None:
     """iter >= MAX_REFLECTION_ITERATIONS → exit even if conflict persists."""
     from langgraph.graph import END
+
     from deepdraw.graph import MAX_REFLECTION_ITERATIONS, should_reflect
 
     state = {
@@ -90,6 +92,7 @@ def test_should_reflect_returns_end_at_max_iter() -> None:
 def test_should_reflect_returns_end_on_needs_human_at_cap() -> None:
     """needs_human at max iter also exits."""
     from langgraph.graph import END
+
     from deepdraw.graph import MAX_REFLECTION_ITERATIONS, should_reflect
 
     state = {

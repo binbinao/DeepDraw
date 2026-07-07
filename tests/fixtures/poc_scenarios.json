@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Q235B-5mm-bracket",
+    "pdf_path": "/tmp/q235b_5mm_bracket.pdf",
+    "expected_material": "Q235B",
+    "expected_thickness": 5.0,
+    "expected_errors": [],
+    "expected_process_steps_min": 2
+  },
+  {
+    "name": "Q345B-10mm-plate",
+    "pdf_path": "/tmp/q345b_10mm_plate.pdf",
+    "expected_material": "Q345B",
+    "expected_thickness": 10.0,
+    "expected_errors": [
+      {"error_type": "view_inconsistency", "severity": "major"}
+    ],
+    "expected_process_steps_min": 1
+  },
+  {
+    "name": "AL6061-anodize-housing",
+    "pdf_path": "/tmp/al6061_housing.pdf",
+    "expected_material": "AL6061",
+    "expected_thickness": 3.0,
+    "expected_errors": [],
+    "expected_process_steps_min": 2
+  },
+  {
+    "name": "SS304-cover",
+    "pdf_path": "/tmp/ss304_cover.pdf",
+    "expected_material": "SS304",
+    "expected_thickness": 2.0,
+    "expected_errors": [],
+    "expected_process_steps_min": 1
+  },
+  {
+    "name": "thin-sheet-R0.3-unmanufacturable",
+    "pdf_path": "/tmp/thin_sheet.pdf",
+    "expected_material": "Q235B",
+    "expected_thickness": 1.0,
+    "expected_errors": [
+      {"error_type": "unmanufacturable_feature", "severity": "critical"}
+    ],
+    "expected_process_steps_min": 1
+  }
+]
