@@ -1,3 +1,5 @@
+> 📄 **Deep-dive case study with metrics, highlights, and architecture**: [binbinao.github.io/resume/projects/deepdraw/](https://binbinao.github.io/resume/projects/deepdraw/)
+
 # DeepDraw — DFM-Copilot Squad
 
 钣金/机加工行业的图纸审核与工艺决策多 Agent 系统。
