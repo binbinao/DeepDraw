@@ -32,7 +32,7 @@ async def bom_generator_node(state: AgentState) -> dict:
 
     try:
         llm = get_structured_llm("bom_generator", BOMLLMResult)
-        prompt = load_prompt("bom_generator").format(
+        prompt = load_prompt("bom_generator").safe_substitute(
             pdf_text="\n\n".join(text_blocks)[:4000],
         )
         result = await llm.ainvoke(prompt)

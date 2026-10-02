@@ -88,8 +88,10 @@ async def process_recommender_node(state: AgentState) -> dict:
 
     try:
         llm = get_structured_llm("process_recommender", ProcessPlanLLMResult)
+        # process_recommender.md has no $placeholders, so safe_substitute
+        # returns the raw template as a string.
         prompt = (
-            load_prompt("process_recommender")
+            load_prompt("process_recommender").safe_substitute()
             + "\n\n## 企业工艺知识（RAG 召回）\n"
             + (rag_context or "（无匹配，使用通用知识）")
             + "\n\n## 当前输入\n"

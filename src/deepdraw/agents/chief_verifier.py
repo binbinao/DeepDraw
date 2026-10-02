@@ -57,7 +57,7 @@ async def chief_verifier_node(state: AgentState) -> dict:
 
     try:
         llm = get_structured_llm("chief_verifier", VerificationResult)
-        prompt = load_prompt("chief_verifier") + "\n\n## 当前 4 Agent 输出\n" + str(context)[:3000]
+        prompt = load_prompt("chief_verifier").safe_substitute() + "\n\n## 当前 4 Agent 输出\n" + str(context)[:3000]
         result = await llm.ainvoke(prompt)
         notes.extend(_format_note(n) for n in result.notes)
         status = result.status

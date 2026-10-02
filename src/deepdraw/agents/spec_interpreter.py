@@ -56,7 +56,7 @@ async def spec_interpreter_node(state: AgentState) -> dict:
         pdf_text = "\n\n".join(intermediate["text_blocks"])[:4000]
         try:
             llm = get_structured_llm("spec_interpreter", SpecLLMResult)
-            prompt = load_prompt("spec_interpreter").format(pdf_text=pdf_text)
+            prompt = load_prompt("spec_interpreter").safe_substitute(pdf_text=pdf_text)
             spec_result = await llm.ainvoke(prompt)
         except Exception as e:
             intermediate.setdefault("llm_errors", []).append(f"spec_interpreter: {e!s}")

@@ -45,7 +45,7 @@ async def drawing_auditor_node(state: AgentState) -> dict:
             for page_num, img_b64 in enumerate(images, start=1):
                 msg = HumanMessage(
                     content=[
-                        {"type": "text", "text": prompt_text.format(page_num=page_num)},
+                        {"type": "text", "text": prompt_text.safe_substitute(page_num=page_num)},
                         {
                             "type": "image_url",
                             "image_url": {"url": f"data:image/png;base64,{img_b64}"},
