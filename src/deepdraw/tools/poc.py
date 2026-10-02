@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from deepdraw.graph import graph
+
 
 @dataclass
 class PoCScenario:
@@ -54,17 +56,42 @@ def load_scenarios(json_path: str | Path) -> list[PoCScenario]:
 
 
 async def run_scenario(scenario: PoCScenario) -> PoCResult:
-    """Run one scenario through the pipeline; collect metrics."""
-    from deepdraw.graph import graph
+    """Run one scenario through the pipeline; collect metrics.
 
+    Failures inside the graph (missing PDF, LLM error, parser crash) are
+    caught and recorded as a ``needs_human`` ``PoCResult`` so one broken
+    scenario can't poison the entire batch. The error message is surfaced
+    via ``detected_errors`` with ``error_type="pipeline_failure"`` so the
+    Markdown report makes the failure obvious.
+    """
     pdf = Path(scenario.pdf_path)
-    pdf.parent.mkdir(parents=True, exist_ok=True)
-    pdf.touch()
     initial_state = {"drawing_path": str(pdf.absolute())}
     config = {"configurable": {"thread_id": f"poc:{scenario.name}"}}
 
     start = time.perf_counter()
-    final = await graph.ainvoke(initial_state, config=config)
+    try:
+        final = await graph.ainvoke(initial_state, config=config)
+    except Exception as exc:  # graph retries already exhausted
+        duration = time.perf_counter() - start
+        return PoCResult(
+            scenario=scenario.name,
+            pdf_path=scenario.pdf_path,
+            duration_sec=round(duration, 2),
+            reflection_iterations=0,
+            final_status="pipeline_failure",
+            detected_material=None,
+            detected_thickness=None,
+            detected_errors=[
+                {"error_type": "pipeline_failure", "message": str(exc)},
+            ],
+            detected_process_steps=0,
+            rag_chunks_retrieved=0,
+            material_match=False,
+            thickness_match=False,
+            error_recall=0.0,
+            error_precision=0.0,
+            process_steps_match=False,
+        )
     duration = time.perf_counter() - start
 
     spec = final.get("spec", {}) or {}
@@ -86,7 +113,9 @@ async def run_scenario(scenario: PoCScenario) -> PoCResult:
     if expected_error_types:
         intersection = expected_error_types & detected_error_types
         recall = len(intersection) / len(expected_error_types)
-        precision = len(intersection) / len(detected_error_types) if detected_error_types else 1.0
+        precision = (
+            len(intersection) / len(detected_error_types) if detected_error_types else 1.0
+        )
     else:
         recall = 1.0
         precision = 1.0 if not detected_errors else 0.0

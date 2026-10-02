@@ -107,7 +107,7 @@ ruff format .               # formatter (optional)
 - `ruff.toml` — standalone ruff config (duplicates pyproject's ruff section).
 - `.env.example` — template for `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_COMPAT_*` (third-party base_url/api_key/model/headers), `DEEPDRAW_LLM_DEFAULT` / `DEEPDRAW_LLM_<AGENT>` (per-agent profile override), optional `LANGSMITH_*`.
 - `main.py` — 3-line forwarder to `deepdraw.cli:app` (equivalent to `python -m deepdraw.cli`).
-- `src/deepdraw/cli.py` — typer app; commands: `run`, `index`, `search`, `wipe`. *(A `poc` subcommand is planned but not yet present.)*
+- `src/deepdraw/cli.py` — typer app with a `poc` sub-app: `run`, `index`, `search`, `wipe`; `deepdraw poc run|report|validate` is the Phase 7 validation surface.
 - `src/deepdraw/graph.py`, `src/deepdraw/state.py`, `src/deepdraw/llm.py` — graph/state/LLM wiring.
 - `src/deepdraw/agents/*.py` — five agent nodes.
 - `src/deepdraw/tools/{pdf,dxf,file_detect,rag,ingest,seed,mcp_server,mcp_tools,poc,poc_report}.py`.
@@ -146,6 +146,6 @@ ruff format .               # formatter (optional)
 - Touching state? Update both `AgentState` annotations **and** `tests/test_state.py` field assertions.
 - Adding an agent? Register it in `graph.py`, `_LLM_CONFIG` in `llm.py`, add `src/deepdraw/prompts/<name>.md`, write `tests/test_agents.py` + `tests/test_graph.py` coverage, extend CLI if user-facing.
 - Changing PoC scenarios? Preserve the `Expected list` error contract in `load_scenarios`; `tests/test_poc.py` enforces it.
-- Editing CLI? Mirror typer `app` structure (`run`, `index`, `search`, `wipe`); a `poc` subcommand is on the roadmap.
+- Editing CLI? Mirror typer `app` structure (`run`, `index`, `search`, `wipe`); the `poc` sub-app exposes `deepdraw poc run|report|validate` (Phase 7).
 - Modifying the RAG layer? Watch the macOS file-lock issue — prefer `EphemeralClient` in tests, persistent `./.chroma_db` only at runtime.
 - Always run `pytest` + `ruff check .` before yielding on non-trivial changes; smoke a real drawing through `deepdraw run` when touching graph/agent code.

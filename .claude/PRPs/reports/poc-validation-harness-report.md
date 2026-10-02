@@ -1,7 +1,7 @@
-# Implementation Report: Phase 7 — PoC Validation Harness (Partial)
+# Implementation Report: Phase 7 — PoC Validation Harness (CLI Surface Complete, Validation Pending)
 
 ## Summary
-实现 PoC harness 框架：场景加载 / 运行 / 聚合 / Markdown 报告渲染；交付物可编程，但缺 100 张历史 NG 图纸 ground truth、`deepdraw poc` CLI 子命令、以及与 ground truth 的回归评测脚本。**完成度 ~60%**。
+实现 PoC harness 框架：场景加载 / 运行 / 聚合 / Markdown 报告渲染；并通过 `deepdraw poc` typer 子应用（`run` / `report` / `validate`）落地 CLI 表面。同时修复 harness 的两个真实缺陷：(1) `run_scenario` 把 graph 崩溃外抛，污染整个 batch；(2) 缺失 PDF 时自动创建 0 字节文件触发 pdfplumber `PdfminerException`。剩余：100 张历史 NG 图纸 ground truth 与真实回归评测脚本。**完成度 ~80%**。
 
 ## Assessment vs Reality
 
@@ -22,18 +22,19 @@
 | 3 | run_scenario / aggregate | ✅ done | tools/poc.py |
 | 4 | render_report → Markdown | ✅ done | tools/poc_report.py |
 | 5 | 5 个合成场景 (Q235B-5mm-bracket 等) | ✅ done | tests/fixtures/poc_scenarios.json |
-| 6 | `deepdraw poc` CLI 子命令 | ⏳ pending | 需 Typer 子命令 |
-| 7 | 100 张 NG 图纸 ground truth | ⏳ pending | PRD Open Question |
-| 8 | docs/poc-runbook.md | ⏳ pending | PRD Open Question |
+| 6 | `deepdraw poc` CLI 子命令 | ✅ done | Typer sub-app: `run` / `report` / `validate` (exit 2 on incomplete ground truth) |
+| 7 | harness 容错 (graph 崩溃 / 0-byte PDF) | ✅ done | run_scenario try/except；移除 touch()；pipeline_failure PoCResult |
+| 8 | 100 张 NG 图纸 ground truth | ⏳ pending | PRD Open Question |
+| 9 | docs/poc-runbook.md | ⏳ pending | PRD Open Question |
 
 ## Validation Results
 
 | Level | Status | Notes |
 |---|---|---|
 | L1 Static Analysis | ✅ Pass | ruff 0 |
-| L2 Unit Tests | ✅ Pass | 5/5 poc + 74 total |
+| L2 Unit Tests | ✅ Pass | 11/11 poc + 80 total |
 | L3 Build/Introspection | ✅ Pass | dataclass / JSON 序列化 OK |
-| L4 E2E CLI | ⚠ Partial | `deepdraw run` 已跑通；但 `poc` 子命令尚未挂 |
+| L4 E2E CLI | ✅ Pass | `deepdraw poc run` 跑通 5 scenarios；`poc report` 写 Markdown；`poc validate` 在 ground-truth 不完整时 exit 2 |
 | L5 PoC ROI | ⏳ Pending | 100 张 NG 图纸回放 + 漏检率统计 |
 
 ## Files Changed
@@ -43,7 +44,8 @@
 | `src/deepdraw/tools/poc.py` | CREATED | 140 行；PoCScenario / PoCResult / load_scenarios / run_scenario / aggregate / run_poc |
 | `src/deepdraw/tools/poc_report.py` | CREATED | 70 行；render_report → Markdown KPI 表 |
 | `tests/fixtures/poc_scenarios.json` | CREATED | 5 合成样例 + expected_* + ground truth 字段 |
-| `tests/test_poc.py` | CREATED | 5 用例（含 Expected-list 契约） |
+| `tests/test_poc.py` | CREATED | 11 用例（5 原有 + 6 新增：run_scenario 容错 + CliRunner 覆盖 run/report/validate） |
+| `src/deepdraw/cli.py` | UPDATED | +poc_app sub-typer + 3 子命令 + Rich 表格 / 容错打印 |
 
 ## Deviations
 
@@ -70,8 +72,9 @@
 | test_poc.py | 5 | load_scenarios happy / load_scenarios missing / "Expected list" ValueError / aggregate / render_report sections |
 
 ## Next Steps
-- [ ] **挂 `deepdraw poc` 子命令** — PoC `run` / `report` 两个命令
+- [x] **挂 `deepdraw poc` 子命令** — Typer sub-app: `run` / `report` / `validate`
+- [x] **Harness 容错** — run_scenario try/except + 移除 phantom PDF touch()
+- [x] **PRD Status Table 更新** — Phase 7 标记为 complete (CLI surface + harness)；剩余为 NG 数据业务侧解锁
 - [ ] **业务侧解锁** — 100 张 NG 图纸获取 + ground truth 规范化
 - [ ] **漏检率/采纳率真实回归** — 接入业务数据后跑 harness
 - [ ] **docs/poc-runbook.md** — 写 PoC 跑通手册
-- [ ] **PRD Status Table 更新** — Phase 7 拆分为 `PoC Harness` complete / `PoC Validation` pending
