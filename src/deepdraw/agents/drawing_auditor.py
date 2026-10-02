@@ -18,6 +18,8 @@ class DrawingErrorItem(BaseModel):
         "view_inconsistency",
         "tolerance_conflict",
         "unmanufacturable_feature",
+        "ambiguous_datum",
+        "surface_finish_conflict",
     ]
     location: str
     severity: Literal["critical", "major", "minor"]
