@@ -19,6 +19,8 @@ class PoCScenario:
     pdf_path: str
     expected_material: str | None = None
     expected_thickness: float | None = None
+    expected_surface_treatment: str | None = None
+    expected_batch_size: int | None = None
     expected_errors: list[dict] = field(default_factory=list)
     expected_process_steps_min: int = 0
 
@@ -45,11 +47,32 @@ class PoCResult:
 
 
 def load_scenarios(json_path: str | Path) -> list[PoCScenario]:
-    """Load scenarios from JSON file."""
+    """Load scenarios from JSON or JSONL file.
+
+    Format is selected by file suffix:
+
+    - ``.jsonl`` / ``.ndjson``: one scenario per line, ``#`` comments skipped,
+      blank lines ignored. Easier to grow incrementally (each line is its own
+      record, no array bracket framing).
+    - ``.json``: a top-level JSON list. The ``Expected list`` ValueError
+      contract is preserved for non-list top-level values.
+
+    Both formats must already be valid for downstream schema validation
+    (``PoCScenario(**item)``), which surfaces field-shape problems.
+    """
     p = Path(json_path)
     if not p.exists():
         raise FileNotFoundError(p)
-    raw = json.loads(p.read_text(encoding="utf-8"))
+    text = p.read_text(encoding="utf-8")
+    if p.suffix.lower() in {".jsonl", ".ndjson"}:
+        records: list[dict] = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            records.append(json.loads(stripped))
+        return [PoCScenario(**item) for item in records]
+    raw = json.loads(text)
     if not isinstance(raw, list):
         raise ValueError(f"Expected list of scenarios, got {type(raw).__name__}")
     return [PoCScenario(**item) for item in raw]

@@ -9,3 +9,6 @@ checkpoints.db
 .idea/
 dist/
 build/
+
+# Phase 7 generated NG drawings — regenerate via `python scripts/generate_ng_drawings.py`
+fixtures/ng_drawings/*.pdf

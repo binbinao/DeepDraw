@@ -2,7 +2,7 @@
 
 > 钣金/机加工行业的图纸审核与工艺决策 Agent 协作系统
 
-**Status**: IMPLEMENTING — Phases 1–7 complete (CLI surface + harness ✓; NG drawings ground truth pending)
+**Status**: IMPLEMENTING — Phases 1–7 complete (100 synthetic NG drawings ✓; real NG ground truth pending business unlock)
 **Generated**: 2026-06-29
 **Last Updated**: 2026-10-02
 **Source**: `docs/original-requirement.md` (业务方向论述) → 重写为产品需求文档
@@ -181,7 +181,7 @@ When **收到一张新的 PDF/DXF 工程图订单**，I want **AI 自动读完�
 | 4 | 工艺与质检 2 Agent | Process Recommender + Chief Verifier | complete | 内部 2 并行 + 与 5 并行 | 2 | *(bundled in Phase 3/6)* ([report](../reports/process-and-verifier-agents-report.md)) |
 | 5 | 企业标准记忆 | Vector DB 接入 + 长上下文企业标准手册注入 + RAG 召回 | complete | 与 3、4 并行 | 2 | [enterprise-rag-memory.plan.md](../plans/completed/enterprise-rag-memory.plan.md) ([report](../reports/enterprise-rag-memory-report.md)) |
 | 6 | 自博弈 Reflection Loop + 第三方 Provider | Chief Verifier 3 轮辩论 + Process Recommender 修正机制；OpenAI-compatible 路由 | complete | - | 3, 4, 5 | [reflection-loop-self-play.plan.md](../plans/completed/reflection-loop-self-play.plan.md) ([report](../reports/reflection-loop-self-play-report.md)) |
-| 7 | PoC 端到端测试 | 100 张历史 NG 图纸回放 + 漏检率统计 + 指标验证 | complete (CLI surface + harness fix done; NG drawings ground truth still pending) | - | 6 | [poc-validation-harness.plan.md](../plans/poc-validation-harness.plan.md) ([report](../reports/poc-validation-harness-report.md)) |
+| 7 | PoC 端到端测试 | 100 张合成 NG 图纸回放 + 漏检率统计 + 指标验证；真实业务 NG 数据接入待业务侧解锁 | complete (synthetic) | - | 6 | [poc-validation-harness.plan.md](../plans/poc-validation-harness.plan.md) ([report](../reports/poc-validation-harness-report.md)) |
 
 ### Phase Details
 

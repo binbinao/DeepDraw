@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -308,3 +309,145 @@ class TestCliPocSubcommands:
         assert result.exit_code == 0
         assert "have full ground truth" in result.output
         assert out_file.exists()
+
+
+# ---------------------------------------------------------------------------
+# JSONL scenarios loader (Phase 7 100 NG drawings)
+# ---------------------------------------------------------------------------
+
+
+class TestJsonlLoader:
+    def test_load_scenarios_from_jsonl(self, tmp_path) -> None:
+        from deepdraw.tools.poc import load_scenarios
+
+        path = tmp_path / "scenarios.jsonl"
+        path.write_text(
+            '{"name":"a","pdf_path":"/tmp/a.pdf","expected_material":"Q235B","expected_thickness":5.0,"expected_errors":[],"expected_process_steps_min":1}\n'
+            '{"name":"b","pdf_path":"/tmp/b.pdf","expected_material":"Q345B","expected_thickness":10.0,"expected_errors":[{"error_type":"missing_dimension"}],"expected_process_steps_min":2}\n'
+        )
+        scenarios = load_scenarios(path)
+        assert len(scenarios) == 2
+        assert scenarios[0].name == "a"
+        assert scenarios[1].expected_thickness == 10.0
+
+    def test_load_scenarios_from_jsonl_skips_comments_and_blanks(self, tmp_path) -> None:
+        from deepdraw.tools.poc import load_scenarios
+
+        path = tmp_path / "scenarios.jsonl"
+        path.write_text(
+            "# header comment\n"
+            "\n"
+            '{"name":"a","pdf_path":"/tmp/a.pdf"}\n'
+            "  \n"
+            '# another comment\n'
+            '{"name":"b","pdf_path":"/tmp/b.pdf"}\n'
+        )
+        scenarios = load_scenarios(path)
+        assert [s.name for s in scenarios] == ["a", "b"]
+
+    def test_load_scenarios_from_jsonl_missing_file(self, tmp_path) -> None:
+        from deepdraw.tools.poc import load_scenarios
+
+        with pytest.raises(FileNotFoundError):
+            load_scenarios(tmp_path / "nope.jsonl")
+
+    def test_load_scenarios_from_jsonl_malformed_line(self, tmp_path) -> None:
+        from deepdraw.tools.poc import load_scenarios
+
+        path = tmp_path / "bad.jsonl"
+        path.write_text('{"name":"a","pdf_path":"/tmp/a.pdf"}\nnot-json\n')
+        with pytest.raises(json.JSONDecodeError):
+            load_scenarios(path)
+
+    def test_json_loader_still_rejects_nonlist(self, tmp_path) -> None:
+        """The 'Expected list' ValueError contract still binds for .json files."""
+        from deepdraw.tools.poc import load_scenarios
+
+        path = tmp_path / "bad.json"
+        path.write_text('{"not": "a list"}')
+        with pytest.raises(ValueError, match="Expected list"):
+            load_scenarios(path)
+
+    def test_poc_scenario_accepts_extra_ground_truth_fields(self) -> None:
+        """Manifest rows carry expected_surface_treatment + expected_batch_size
+        that PoCScenario must accept (synthesized NG manifest)."""
+        scenario = PoCScenario(
+            name="x",
+            pdf_path="/tmp/x.pdf",
+            expected_material="Q235B",
+            expected_thickness=5.0,
+            expected_surface_treatment="喷塑",
+            expected_batch_size=100,
+            expected_errors=[],
+            expected_process_steps_min=2,
+        )
+        assert scenario.expected_surface_treatment == "喷塑"
+        assert scenario.expected_batch_size == 100
+
+
+# ---------------------------------------------------------------------------
+# scripts/generate_ng_drawings.py — Phase 7 100 NG synthetic generator
+# ---------------------------------------------------------------------------
+
+
+class TestNgDrawingGenerator:
+    def test_builds_full_100_cartesian(self) -> None:
+        """Generator must produce exactly 100 scenarios from
+        5 materials × 4 thicknesses × 5 defects."""
+        import sys
+
+        sys.path.insert(0, "scripts")
+        from generate_ng_drawings import (  # type: ignore[import-not-found]
+            DEFECT_CATEGORIES,
+            MATERIALS,
+            THICKNESSES_MM,
+            _build_scenarios,
+        )
+
+        scenarios = _build_scenarios()
+        assert len(scenarios) == 100
+        assert len({s.material for s in scenarios}) == len(MATERIALS) == 5
+        assert len({s.thickness_mm for s in scenarios}) == len(THICKNESSES_MM) == 4
+        assert len({s.defect_category for s in scenarios}) == len(DEFECT_CATEGORIES) == 5
+        # Names unique.
+        assert len({s.name for s in scenarios}) == 100
+
+    def test_generates_100_pdfs_and_manifest(self, tmp_path) -> None:
+        """Run the generator against tmp_path; verify artifacts + manifest shape."""
+        import subprocess
+
+        out = subprocess.run(
+            [
+                "python",
+                "scripts/generate_ng_drawings.py",
+                "--output-dir",
+                str(tmp_path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert "Generated 100" in out.stdout
+
+        pdfs = sorted(tmp_path.glob("*.pdf"))
+        assert len(pdfs) == 100
+        manifest = (tmp_path / "manifest.jsonl").read_text(encoding="utf-8")
+        records = [json.loads(line) for line in manifest.splitlines() if line.strip()]
+        assert len(records) == 100
+
+        # Cross-check against the catalog exposed by the generator.
+        import sys
+
+        sys.path.insert(0, "scripts")
+        from generate_ng_drawings import (  # type: ignore[import-not-found]
+            MATERIALS,
+            THICKNESSES_MM,
+        )
+
+        first = records[0]
+        assert first["expected_material"] in MATERIALS
+        assert first["expected_thickness"] in THICKNESSES_MM
+        assert first["expected_errors"]
+        assert first["expected_process_steps_min"] >= 1
+        # pdf_path must resolve to a real file on disk
+        assert Path(first["pdf_path"]).exists()

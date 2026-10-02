@@ -67,6 +67,14 @@ deepdraw search "Q235B forming" -n 5
 # wipe the ChromaDB directory (irreversible)
 deepdraw wipe
 
+# Phase 7 PoC validation harness
+deepdraw poc run --scenarios fixtures/poc_scenarios.json
+deepdraw poc report --scenarios fixtures/poc_scenarios.json --output poc-report.md
+deepdraw poc validate --scenarios fixtures/ng_drawings/manifest.jsonl --output poc-validation.md
+
+# Generate 100 synthetic NG drawings (idempotent; ~16s)
+python scripts/generate_ng_drawings.py
+
 # LangGraph Studio / dev server (loads langgraph.json → ./src/deepdraw/graph.py:graph)
 langgraph dev
 ```
@@ -112,6 +120,8 @@ ruff format .               # formatter (optional)
 - `src/deepdraw/agents/*.py` — five agent nodes.
 - `src/deepdraw/tools/{pdf,dxf,file_detect,rag,ingest,seed,mcp_server,mcp_tools,poc,poc_report}.py`.
 - `fixtures/poc_scenarios.json` — 5 scenarios; non-list top-level must raise `ValueError("Expected list")`.
+- `fixtures/ng_drawings/manifest.jsonl` — 100 ground-truth records for Phase 7 validation (jsonl, one scenario per line). PDFs at `fixtures/ng_drawings/*.pdf` are gitignored; regenerate via `python scripts/generate_ng_drawings.py`.
+- `scripts/generate_ng_drawings.py` — Cartesian-product generator: 5 materials × 4 thicknesses × 5 defect categories = 100 synthetic NG PDFs with title-block text pdfplumber can extract.
 - `tests/conftest.py` — runtime-generated `sample_pdf`, `sample_dxf`, `sample_state`, `compiled_graph` (no binary fixtures in repo).
 - `.claude/PRPs/prds/deepdraw-dfm-platform.prd.md` — canonical roadmap with phase status table; per-phase plan + report pairs under `.claude/PRPs/plans/completed/` and `.claude/PRPs/reports/`.
 
