@@ -2,8 +2,9 @@
 
 > 钣金/机加工行业的图纸审核与工艺决策 Agent 协作系统
 
-**Status**: DRAFT — needs validation
+**Status**: IMPLEMENTING — Phases 1–6 complete; Phase 7 in progress (Harness ✓ / Validation pending)
 **Generated**: 2026-06-29
+**Last Updated**: 2026-10-02
 **Source**: `docs/original-requirement.md` (业务方向论述) → 重写为产品需求文档
 
 ---
@@ -176,11 +177,11 @@ When **收到一张新的 PDF/DXF 工程图订单**，I want **AI 自动读完�
 |---|-------|-------------|--------|----------|---------|
 | 1 | 基础设施搭建 | LangGraph 框架 + 5-Agent 骨架 + State 定义 + 项目脚手架 | complete | - | - | [infrastructure-bootstrap.plan.md](../plans/completed/infrastructure-bootstrap.plan.md) ([report](../reports/infrastructure-bootstrap-report.md)) |
 | 2 | 文档解析工具链 | PDF/DXF 解析封装为 MCP Tools；MCP Server 起步 | complete | - | 1 | [document-parsing-toolchain.plan.md](../plans/completed/document-parsing-toolchain.plan.md) ([report](../reports/document-parsing-toolchain-report.md)) |
-| 3 | 核心 3 Agent 实现 | Spec Interpreter + Drawing Auditor + BOM Generator | pending | 内部 3 并行 | 2 |
-| 4 | 工艺与质检 2 Agent | Process Recommender + Chief Verifier | pending | 内部 2 并行 + 与 5 并行 | 2 |
-| 5 | 企业标准记忆 | Vector DB 接入 + 长上下文企业标准手册注入 + RAG 召回 | pending | 与 3、4 并行 | 2 |
-| 6 | 自博弈 Reflection Loop | Chief Verifier 3 轮辩论 + Process Recommender 修正机制 | pending | - | 3, 4, 5 |
-| 7 | PoC 端到端测试 | 100 张历史 NG 图纸回放 + 漏检率统计 + 指标验证 | pending | - | 6 |
+| 3 | 核心 3 Agent 实现 | Spec Interpreter + Drawing Auditor + BOM Generator | complete | 内部 3 并行 | 2 | [core-3-agents-llm.plan.md](../plans/completed/core-3-agents-llm.plan.md) ([report](../reports/core-3-agents-llm-report.md)) |
+| 4 | 工艺与质检 2 Agent | Process Recommender + Chief Verifier | complete | 内部 2 并行 + 与 5 并行 | 2 | *(bundled in Phase 3/6)* ([report](../reports/process-and-verifier-agents-report.md)) |
+| 5 | 企业标准记忆 | Vector DB 接入 + 长上下文企业标准手册注入 + RAG 召回 | complete | 与 3、4 并行 | 2 | [enterprise-rag-memory.plan.md](../plans/completed/enterprise-rag-memory.plan.md) ([report](../reports/enterprise-rag-memory-report.md)) |
+| 6 | 自博弈 Reflection Loop + 第三方 Provider | Chief Verifier 3 轮辩论 + Process Recommender 修正机制；OpenAI-compatible 路由 | complete | - | 3, 4, 5 | [reflection-loop-self-play.plan.md](../plans/completed/reflection-loop-self-play.plan.md) ([report](../reports/reflection-loop-self-play-report.md)) |
+| 7 | PoC 端到端测试 | 100 张历史 NG 图纸回放 + 漏检率统计 + 指标验证 | in-progress (Harness done, Validation pending) | - | 6 | [poc-validation-harness.plan.md](../plans/poc-validation-harness.plan.md) ([report](../reports/poc-validation-harness-report.md)) |
 
 ### Phase Details
 
