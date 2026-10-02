@@ -29,14 +29,50 @@ def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[s
     return chunks
 
 
+_DEFAULT_EMBEDDING_AGENT = "bom_generator"  # borrows the LLM profile's API key/URL
+
+
 def get_default_embedding():
-    """Lazy-load OpenAI embeddings. None if unavailable."""
+    """Lazy-load embeddings matching the active LLM profile.
+
+    For ``openai`` and ``openai-compatible`` providers this returns an
+    ``OpenAIEmbeddings`` instance using the same ``base_url`` / ``api_key``
+    that the chat models use. For ``anthropic`` there is no native embedding
+    endpoint — we fall back to OpenAI's official API and require
+    ``OPENAI_API_KEY`` (or return ``None`` to disable embedding).
+
+    Returns ``None`` if the integration package is missing or no key is set,
+    so callers can degrade gracefully (Chroma will then use a local
+    all-MiniLM stub via ``embedding_fn=None``).
+    """
     try:
         from langchain_openai import OpenAIEmbeddings  # type: ignore[import-not-found]
-
-        return OpenAIEmbeddings(model="text-embedding-3-small")
     except Exception:
         return None
+
+    # Reuse the active LLM profile so embeddings + chat share one endpoint.
+    from deepdraw.llm import get_profile  # local import to avoid cycles
+
+    profile = get_profile(_DEFAULT_EMBEDDING_AGENT)
+    base_url = profile.extra.get("base_url")
+    api_key = profile.extra.get("api_key") or _env_fallback("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    model = (
+        "text-embedding-3-small"
+        if profile.provider in {"openai", "openai-compatible"}
+        else "text-embedding-3-small"
+    )
+    try:
+        return OpenAIEmbeddings(model=model, api_key=api_key, base_url=base_url)
+    except Exception:
+        return None
+
+
+def _env_fallback(key: str) -> str | None:
+    import os
+
+    return os.environ.get(key)
 
 
 def ingest_text(
