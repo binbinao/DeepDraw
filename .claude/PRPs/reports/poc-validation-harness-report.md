@@ -106,6 +106,6 @@
 - [x] **Harness 容错** — run_scenario try/except + 移除 phantom PDF touch()
 - [x] **PRD Status Table 更新** — Phase 7 标记为 complete (CLI surface + harness + 100 NG 合成数据)
 - [x] **100 张合成 NG 图纸 + manifest.jsonl** — scripts/generate_ng_drawings.py
+- [x] **docs/poc-runbook.md** — 写 PoC 跑通手册 (manifest schema + CLI reference + 故障排查)
 - [ ] **业务侧解锁** — 100 张真实 NG 图纸 + 当年人工审图记录
 - [ ] **漏检率/采纳率真实回归** — 接入业务数据后跑 harness，对比 PRD 主指标 (>50% 漏检率降低 / >95% 审核覆盖率)
-- [ ] **docs/poc-runbook.md** — 写 PoC 跑通手册

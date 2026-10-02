@@ -121,6 +121,7 @@ ruff format .               # formatter (optional)
 - `src/deepdraw/tools/{pdf,dxf,file_detect,rag,ingest,seed,mcp_server,mcp_tools,poc,poc_report}.py`.
 - `fixtures/poc_scenarios.json` — 5 scenarios; non-list top-level must raise `ValueError("Expected list")`.
 - `fixtures/ng_drawings/manifest.jsonl` — 100 ground-truth records for Phase 7 validation (jsonl, one scenario per line). PDFs at `fixtures/ng_drawings/*.pdf` are gitignored; regenerate via `python scripts/generate_ng_drawings.py`.
+- `docs/poc-runbook.md` — operational guide for `deepdraw poc run|report|validate` + manifest schema + real-data onboarding checklist + troubleshooting.
 - `scripts/generate_ng_drawings.py` — Cartesian-product generator: 5 materials × 4 thicknesses × 5 defect categories = 100 synthetic NG PDFs with title-block text pdfplumber can extract.
 - `tests/conftest.py` — runtime-generated `sample_pdf`, `sample_dxf`, `sample_state`, `compiled_graph` (no binary fixtures in repo).
 - `.claude/PRPs/prds/deepdraw-dfm-platform.prd.md` — canonical roadmap with phase status table; per-phase plan + report pairs under `.claude/PRPs/plans/completed/` and `.claude/PRPs/reports/`.
